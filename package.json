@@ -1,0 +1,69 @@
+{
+  "name": "womm",
+  "version": "0.1.0",
+  "description": "Works on my machine. Let's prove it.",
+  "type": "module",
+  "bin": {
+    "womm": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev": "tsx src/cli/index.ts",
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "keywords": [
+    "reproducibility",
+    "cli",
+    "developer-tools",
+    "diagnostics",
+    "portability",
+    "environment"
+  ],
+  "author": "Pratham Debnath",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/isthatpratham/works-on-my-machine.git"
+  },
+  "bugs": {
+    "url": "https://github.com/isthatpratham/works-on-my-machine/issues"
+  },
+  "homepage": "https://github.com/isthatpratham/works-on-my-machine#readme",
+  "dependencies": {
+    "boxen": "^8.0.1",
+    "chalk": "^6.0.0",
+    "cli-table3": "^0.6.5",
+    "commander": "^15.0.0",
+    "ora": "^9.4.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.5.0",
+    "eslint": "^10.10.0",
+    "prettier": "^3.9.6",
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.70.0",
+    "vitest": "^5.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}
