@@ -2,6 +2,8 @@
   <img src="images/2.png" alt="WOMM — Works on my machine. Let's prove it." width="240">
 </p>
 
+---
+
 <h1 align="center">WOMM</h1>
 
 <p align="center">
