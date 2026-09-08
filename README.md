@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="images/1.png" alt="WOMM — Works on my machine. Let's prove it." width="480">
+  <img src="images/2.png" alt="WOMM — Works on my machine. Let's prove it." width="240">
 </p>
 
 <h1 align="center">WOMM</h1>
