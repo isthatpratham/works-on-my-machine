@@ -56,6 +56,10 @@ WOMM surfaces these portability issues instantly and gives you a single, determi
 ```bash
 npm install -g @isthatpratham/womm
 ```
+or
+```bash
+npm i -g @isthatpratham/womm
+```
 
 Verify the installation:
 
