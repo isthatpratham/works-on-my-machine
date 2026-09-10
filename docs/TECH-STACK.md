@@ -1151,19 +1151,19 @@ The intended distribution channel is npm.
 Primary installation:
 
 ```bash
-npm install -g womm
+npm install -g @isthatpratham/womm
 ```
 
 One-time execution:
 
 ```bash
-npx womm
+npx @isthatpratham/womm check .
 ```
 
 pnpm:
 
 ```bash
-pnpm dlx womm
+pnpm dlx @isthatpratham/womm check .
 ```
 
 The published package should contain only files required to execute WOMM.

@@ -54,7 +54,7 @@ WOMM surfaces these portability issues instantly and gives you a single, determi
 ### Global Installation (Recommended)
 
 ```bash
-npm install -g womm
+npm install -g @isthatpratham/womm
 ```
 
 Verify the installation:
@@ -68,10 +68,10 @@ womm --version
 Run without global installation using `npx`:
 
 ```bash
-npx womm
+npx @isthatpratham/womm check .
 ```
 
-*(or using `pnpm dlx womm`)*
+*(or using `pnpm dlx @isthatpratham/womm check .`)*
 
 ---
 
