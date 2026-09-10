@@ -1,32 +1,33 @@
-name: CI
+name: Release
 
 on:
   push:
     branches:
       - main
-      - master
-      - 'feat/**'
-      - 'fix/**'
-      - 'release/**'
-      - release-automation
-      - 'ci-**'
-      - terminal-reporting
-      - readme-update
-      - ci-stability
-  pull_request:
-    branches: [main, master]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 permissions:
   contents: read
 
 jobs:
-  validate:
-    name: Validate and Test
+  release:
+    name: Release and Publish
     runs-on: ubuntu-latest
+    if: github.repository == 'isthatpratham/works-on-my-machine'
+    permissions:
+      contents: write
+      id-token: write
+      issues: write
+      pull-requests: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -36,8 +37,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
+
+      - name: Upgrade npm for Trusted Publishing
+        run: npm install -g npm@latest
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -51,11 +55,16 @@ jobs:
       - name: Check code formatting
         run: pnpm format:check
 
-      - name: Build package
-        run: pnpm build
-
       - name: Run tests
         run: pnpm test
 
+      - name: Build package
+        run: pnpm build
+
       - name: Verify package pack archive
         run: npm pack --dry-run
+
+      - name: Run semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm exec semantic-release
