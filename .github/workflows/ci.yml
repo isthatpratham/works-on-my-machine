@@ -3,7 +3,17 @@ name: CI
 on:
   push:
     branches:
-      [main, master, 'feat/**', 'fix/**', 'release/**', terminal-reporting]
+      [
+        main,
+        master,
+        'feat/**',
+        'fix/**',
+        'release/**',
+        'ci-**',
+        terminal-reporting,
+        readme-update,
+        ci-stability,
+      ]
   pull_request:
     branches: [main, master]
 
@@ -42,11 +52,11 @@ jobs:
       - name: Check code formatting
         run: pnpm format:check
 
-      - name: Run tests
-        run: pnpm test
-
       - name: Build package
         run: pnpm build
+
+      - name: Run tests
+        run: pnpm test
 
       - name: Verify package pack archive
         run: npm pack --dry-run
