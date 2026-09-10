@@ -2,6 +2,7 @@ import type { ProjectContext } from '../domain/project-context.js';
 import type { Finding } from '../domain/finding.js';
 import type { DetectionCategory } from '../domain/categories.js';
 import type { Severity } from '../domain/severity.js';
+import { createDefaultDetectorRegistry } from './default-registry.js';
 import { DetectorRegistry } from './detector-registry.js';
 import { validateFinding } from './finding-validator.js';
 import type {
@@ -85,7 +86,7 @@ export class DetectionEngine {
   private readonly registry: DetectorRegistry;
 
   constructor(options: DetectionEngineOptions = {}) {
-    this.registry = options.registry ?? new DetectorRegistry();
+    this.registry = options.registry ?? createDefaultDetectorRegistry();
   }
 
   /**
