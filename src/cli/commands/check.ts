@@ -1,8 +1,8 @@
-import { existsSync, statSync } from 'node:fs';
-import { resolve } from 'node:path';
 import type { CheckOptions } from '../options.js';
 import { EXIT_CODES, type ExitCode } from '../exit-codes.js';
 import { InvalidUsageError } from '../errors.js';
+import { buildProjectContext } from '../../application/index.js';
+import { InvalidTargetError } from '../../discovery/index.js';
 
 export interface CheckResult {
   exitCode: ExitCode;
@@ -13,23 +13,18 @@ export async function executeCheck(
   targetPath: string = '.',
   options: CheckOptions = {},
 ): Promise<CheckResult> {
-  const resolvedPath = resolve(process.cwd(), targetPath);
-
-  if (!existsSync(resolvedPath)) {
-    throw new InvalidUsageError(
-      `Target directory does not exist: ${targetPath}`,
-    );
-  }
-
-  const stat = statSync(resolvedPath);
-  if (!stat.isDirectory()) {
-    throw new InvalidUsageError(
-      `Target path is not a directory: ${targetPath}`,
-    );
+  let context;
+  try {
+    context = await buildProjectContext(targetPath);
+  } catch (error: unknown) {
+    if (error instanceof InvalidTargetError) {
+      throw new InvalidUsageError(error.message);
+    }
+    throw error;
   }
 
   if (options.verbose) {
-    console.log(`Analyzing target: ${resolvedPath}`);
+    console.log(`Analyzing target: ${context.rootPath}`);
   }
 
   console.log("WOMM — Works on my machine. Let's prove it.");
@@ -37,6 +32,6 @@ export async function executeCheck(
 
   return {
     exitCode: EXIT_CODES.SUCCESS,
-    targetPath: resolvedPath,
+    targetPath: context.rootPath,
   };
 }

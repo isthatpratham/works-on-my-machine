@@ -1,0 +1,4 @@
+[project]
+name = "test-python-app"
+version = "0.1.0"
+description = "A test Python application"
