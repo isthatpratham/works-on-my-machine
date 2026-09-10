@@ -5,3 +5,5 @@ pnpm-lock.yaml
 images/
 docs/
 README.md
+tests/fixtures/
+

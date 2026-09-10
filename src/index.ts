@@ -2,3 +2,6 @@ export * from './cli/exit-codes.js';
 export * from './cli/errors.js';
 export * from './cli/options.js';
 export * from './domain/index.js';
+export * from './platform/index.js';
+export * from './discovery/index.js';
+export * from './application/index.js';
