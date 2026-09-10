@@ -510,16 +510,17 @@ describe('Default Detector Registry & Application Orchestration', () => {
   });
 
   it('analyzeProject executes end-to-end on clean project fixture', async () => {
+    const nodeVer = process.versions.node;
     writeFileSync(
       join(tempDir, 'package.json'),
       JSON.stringify({
         name: 'clean-app',
-        engines: { node: '20.0.0' },
+        engines: { node: nodeVer },
       }),
     );
     writeFileSync(join(tempDir, 'pnpm-lock.yaml'), '# lockfile\n');
     writeFileSync(join(tempDir, '.gitignore'), 'node_modules\n');
-    writeFileSync(join(tempDir, '.nvmrc'), '20.0.0\n');
+    writeFileSync(join(tempDir, '.nvmrc'), `${nodeVer}\n`);
 
     const result = await analyzeProject(tempDir, {
       gitExecutor: async () => ({
