@@ -4,6 +4,7 @@ import type { Finding } from '../../domain/finding.js';
 import type { ProjectContext } from '../../domain/project-context.js';
 import { SEVERITIES } from '../../domain/severity.js';
 import { safeReadTextFile } from '../../platform/filesystem.js';
+import { isFixturePath } from '../../discovery/file-classifier.js';
 
 const KNOWN_SERVICE_PORTS: Record<string, string> = {
   '5432': 'PostgreSQL',
@@ -43,7 +44,9 @@ export class EnvironmentDetector implements Detector {
       context.environment.envFilePresent ||
       context.environment.envExamplePresent ||
       context.environment.detectedEnvVarNames.length > 0 ||
-      context.projectFiles.some((f) => f.type === 'env')
+      context.projectFiles.some(
+        (f) => f.type === 'env' && !isFixturePath(f.relativePath),
+      )
     );
   }
 
@@ -106,7 +109,9 @@ export class EnvironmentDetector implements Detector {
     }
 
     // 3. Inspect env and config files for localhost services, absolute paths, and local IPs
-    const envFiles = context.projectFiles.filter((f) => f.type === 'env');
+    const envFiles = context.projectFiles.filter(
+      (f) => f.type === 'env' && !isFixturePath(f.relativePath),
+    );
 
     for (const file of envFiles) {
       const content = safeReadTextFile(

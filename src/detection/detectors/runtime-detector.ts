@@ -7,58 +7,12 @@ import {
   safeReadJsonFile,
   safeReadTextFile,
 } from '../../platform/filesystem.js';
+import { isUnpinnedNodeVersion, satisfiesSemver } from '../semver.js';
 
 interface PackageJsonStructure {
   engines?: {
     node?: string;
   };
-}
-
-/**
- * Evaluates whether a Node.js version declaration is an unpinned range or wildcard.
- */
-function isUnpinnedNodeVersion(version: string): boolean {
-  const trimmed = version.trim();
-  if (
-    trimmed === '' ||
-    trimmed === '*' ||
-    trimmed.toLowerCase() === 'latest' ||
-    trimmed.startsWith('>=') ||
-    trimmed.startsWith('>') ||
-    trimmed.startsWith('<=') ||
-    trimmed.startsWith('<') ||
-    trimmed.startsWith('^') ||
-    trimmed.startsWith('~') ||
-    trimmed.includes('||') ||
-    trimmed.toLowerCase().includes('.x') ||
-    trimmed.toLowerCase().includes('x.') ||
-    trimmed.includes('*')
-  ) {
-    return true;
-  }
-  return false;
-}
-
-/**
- * Extracts comparable major and optional minor version numbers from a version string.
- */
-function extractMajorMinor(
-  version: string,
-): { major: number; minor?: number } | null {
-  const cleaned = version.replace(/^[v^~>=<\s]+/, '').trim();
-  const match = /^(\d+)(?:\.(\d+))?/.exec(cleaned);
-  if (match && match[1]) {
-    return {
-      major: parseInt(match[1], 10),
-      minor: match[2] !== undefined ? parseInt(match[2], 10) : undefined,
-    };
-  }
-  return null;
-}
-
-function extractMajorVersion(version: string): number | null {
-  const parsed = extractMajorMinor(version);
-  return parsed ? parsed.major : null;
 }
 
 export class RuntimeDetector implements Detector {
@@ -103,14 +57,7 @@ export class RuntimeDetector implements Detector {
 
       // 1.2 Node version mismatch
       if (declared && installed) {
-        const declaredMajor = extractMajorVersion(declared);
-        const installedMajor = extractMajorVersion(installed);
-
-        if (
-          declaredMajor !== null &&
-          installedMajor !== null &&
-          declaredMajor !== installedMajor
-        ) {
+        if (!satisfiesSemver(installed, declared)) {
           findings.push({
             id: 'runtime.node.mismatch',
             category: 'runtime',
@@ -171,9 +118,13 @@ export class RuntimeDetector implements Detector {
       }
 
       if (declarations.length > 1) {
-        const firstMajor = extractMajorVersion(declarations[0]!.version);
-        const hasConflict = declarations.some(
-          (d) => extractMajorVersion(d.version) !== firstMajor,
+        const hasConflict = declarations.some((d1, i) =>
+          declarations.some(
+            (d2, j) =>
+              i < j &&
+              !satisfiesSemver(d1.version, d2.version) &&
+              !satisfiesSemver(d2.version, d1.version),
+          ),
         );
 
         if (hasConflict) {
@@ -203,18 +154,20 @@ export class RuntimeDetector implements Detector {
       const { declared, installed, source } = context.runtime.python;
 
       // 2.1 Python unpinned
-      if (!declared) {
+      if (!declared || isUnpinnedNodeVersion(declared)) {
         findings.push({
           id: 'runtime.python.unpinned',
           category: 'runtime',
           severity: SEVERITIES.WARNING,
           title: 'Python version is not pinned',
-          description:
-            'No project-level Python version declaration was detected.',
+          description: declared
+            ? `Declared Python version '${declared}' uses an unpinned or non-exact range.`
+            : 'No project-level Python version declaration was detected.',
           evidence: [
             {
-              type: 'missing-declaration',
+              type: declared ? 'version-declaration' : 'missing-declaration',
               source: source ?? 'python',
+              detail: declared,
             },
           ],
           impact:
@@ -226,17 +179,7 @@ export class RuntimeDetector implements Detector {
 
       // 2.2 Python mismatch
       if (declared && installed) {
-        const declaredVer = extractMajorMinor(declared);
-        const installedVer = extractMajorMinor(installed);
-
-        if (
-          declaredVer !== null &&
-          installedVer !== null &&
-          (declaredVer.major !== installedVer.major ||
-            (declaredVer.minor !== undefined &&
-              installedVer.minor !== undefined &&
-              declaredVer.minor !== installedVer.minor))
-        ) {
+        if (!satisfiesSemver(installed, declared)) {
           findings.push({
             id: 'runtime.python.mismatch',
             category: 'runtime',
