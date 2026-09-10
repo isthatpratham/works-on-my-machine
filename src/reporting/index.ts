@@ -1,4 +1,5 @@
 export * from './terminal-renderer.js';
+export * from './terminal-animator.js';
 export * from './formatters/project-summary.js';
 export * from './formatters/score.js';
 export * from './formatters/category-health.js';

@@ -6,7 +6,10 @@ import { InvalidTargetError } from '../../discovery/index.js';
 import { DetectionEngine } from '../../detection/detection-engine.js';
 import { createDefaultDetectorRegistry } from '../../detection/default-registry.js';
 import { ScoringEngine } from '../../scoring/scoring-engine.js';
-import { renderTerminalReport } from '../../reporting/terminal-renderer.js';
+import {
+  renderTerminalReport,
+  revealTerminalReport,
+} from '../../reporting/index.js';
 
 export interface CheckResult {
   exitCode: ExitCode;
@@ -41,7 +44,7 @@ export async function executeCheck(
     verbose: options.verbose,
   });
 
-  console.log(report);
+  await revealTerminalReport(report);
 
   let exitCode: ExitCode = EXIT_CODES.SUCCESS;
   if (scoreResult.summary.criticalCount > 0) {
