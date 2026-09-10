@@ -71,7 +71,7 @@ describe('Release Configuration & Rules', () => {
     const yaml = readFileSync(releaseWorkflowPath, 'utf-8');
 
     // Branch trigger only on main
-    expect(yaml).toContain('branches:\n      - main');
+    expect(yaml).toMatch(/branches:\s*-\s*main/);
 
     // Required OIDC and release permissions
     expect(yaml).toContain('id-token: write');
