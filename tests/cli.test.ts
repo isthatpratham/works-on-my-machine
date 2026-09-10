@@ -74,7 +74,6 @@ describe('CLI foundation', () => {
   it('should expose the package version matching package.json', () => {
     const program = createProgram();
     expect(program.version()).toBe(pkg.version);
-    expect(program.version()).toBe('0.1.0');
   });
 
   it('should register the check command', () => {
@@ -274,7 +273,7 @@ describe('CLI real process exit codes', () => {
     });
 
     expect(result.status).toBe(EXIT_CODES.SUCCESS);
-    expect(result.stdout).toContain('0.1.0');
+    expect(result.stdout.trim()).toBe(pkg.version);
   });
 
   it('should exit with INVALID_USAGE (4) in actual OS process for unknown option', () => {

@@ -3,13 +3,15 @@
 import { Command, CommanderError } from 'commander';
 import { realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import pkg from '../../package.json' with { type: 'json' };
 import { registerCommands } from './commands/index.js';
 import { executeCheck } from './commands/check.js';
 import { configureColor, formatError } from './format.js';
 import { CliError } from './errors.js';
 import { EXIT_CODES, type ExitCode } from './exit-codes.js';
 import type { GlobalOptions } from './options.js';
+import { getCliVersion } from './version.js';
+
+export { getCliVersion };
 
 export function createProgram(): Command {
   const program = new Command();
@@ -17,7 +19,7 @@ export function createProgram(): Command {
   program
     .name('womm')
     .description("Works on my machine. Let's prove it.")
-    .version(pkg.version, '-v, --version', 'output the version number')
+    .version(getCliVersion(), '-v, --version', 'output the version number')
     .option('--verbose', 'enable verbose diagnostic output')
     .option('--no-color', 'disable colored terminal output')
     .exitOverride()
