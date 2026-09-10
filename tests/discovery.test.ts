@@ -173,4 +173,23 @@ describe('Metadata Collectors', () => {
     expect(deps.manifests).toContain('pyproject.toml');
     expect(deps.manifests).toContain('requirements.txt');
   });
+
+  it('should ignore nested fixture lockfiles, manifests, and .env files during root project analysis', () => {
+    const rootPath = resolve(__dirname, '..');
+    const files = discoverProjectFiles(rootPath);
+
+    const deps = extractDependencyContext(rootPath, files);
+    // Should only contain root lockfile (pnpm-lock.yaml) and not tests/fixtures/node-project/pnpm-lock.yaml
+    expect(deps.lockfiles).toEqual(['pnpm-lock.yaml']);
+    expect(deps.manifests).toEqual(['package.json']);
+
+    const env = extractEnvironmentContext(rootPath, files);
+    // Root repo has no .env
+    expect(env.envFilePresent).toBe(false);
+
+    const runtime = extractRuntimeContext(rootPath, files);
+    // Root repo is Node/TS, python should be not_applicable despite tests/fixtures/python-project
+    expect(runtime.node?.status).toBe('known');
+    expect(runtime.python?.status).toBe('not_applicable');
+  });
 });

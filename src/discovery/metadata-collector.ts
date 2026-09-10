@@ -15,6 +15,7 @@ import {
   getOperatingSystem,
   getSystemNodeVersion,
 } from '../platform/os.js';
+import { isFixturePath } from './file-classifier.js';
 
 interface PackageJsonStructure {
   name?: string;
@@ -104,12 +105,19 @@ export function extractEnvironmentContext(
   projectRoot: string,
   projectFiles: readonly ProjectFile[],
 ): EnvironmentContext {
-  const envFilePresent = projectFiles.some((f) => f.relativePath === '.env');
-  const envExamplePresent = projectFiles.some(
-    (f) => f.relativePath === '.env.example',
+  const nonFixtureFiles = projectFiles.filter(
+    (f) => !isFixturePath(f.relativePath),
   );
 
-  const envFiles = projectFiles.filter((f) => f.type === 'env');
+  const envFilePresent = nonFixtureFiles.some(
+    (f) => f.relativePath === '.env' || f.type === 'env',
+  );
+  const envExamplePresent = nonFixtureFiles.some(
+    (f) =>
+      f.relativePath === '.env.example' || f.relativePath === '.env.template',
+  );
+
+  const envFiles = nonFixtureFiles.filter((f) => f.type === 'env');
   const detectedVarSet = new Set<string>();
 
   // Extract variable keys only (never values)
@@ -144,19 +152,23 @@ export function extractDependencyContext(
   projectRoot: string,
   projectFiles: readonly ProjectFile[],
 ): DependencyContext {
-  const lockfiles = projectFiles
+  const nonFixtureFiles = projectFiles.filter(
+    (f) => !isFixturePath(f.relativePath),
+  );
+
+  const lockfiles = nonFixtureFiles
     .filter((f) => f.type === 'lockfile')
     .map((f) => f.relativePath)
     .sort();
 
-  const manifests = projectFiles
+  const manifests = nonFixtureFiles
     .filter((f) => f.type === 'manifest')
     .map((f) => f.relativePath)
     .sort();
 
   let packageManager: PackageManagerInfo | undefined;
 
-  const pkgJsonFile = projectFiles.find(
+  const pkgJsonFile = nonFixtureFiles.find(
     (f) => f.relativePath === 'package.json',
   );
   if (pkgJsonFile) {
@@ -209,7 +221,10 @@ export function extractRuntimeContext(
   let pythonRuntime: RuntimeInfo | undefined;
   const otherRuntimes: string[] = [];
 
-  const relPaths = new Set(projectFiles.map((f) => f.relativePath));
+  const nonFixtureFiles = projectFiles.filter(
+    (f) => !isFixturePath(f.relativePath),
+  );
+  const relPaths = new Set(nonFixtureFiles.map((f) => f.relativePath));
 
   // 1. Node Runtime detection
   const hasPackageJson = relPaths.has('package.json');
@@ -219,7 +234,7 @@ export function extractRuntimeContext(
     hasPackageJson ||
     hasNvmrc ||
     hasNodeVersion ||
-    projectFiles.some(
+    nonFixtureFiles.some(
       (f) =>
         f.type === 'source' &&
         (f.relativePath.endsWith('.js') || f.relativePath.endsWith('.ts')),
@@ -277,7 +292,7 @@ export function extractRuntimeContext(
     hasPyproject ||
     hasPipfile ||
     hasRequirements ||
-    projectFiles.some((f) => f.relativePath.endsWith('.py'));
+    nonFixtureFiles.some((f) => f.relativePath.endsWith('.py'));
 
   if (hasPythonFiles) {
     let declared: string | undefined;

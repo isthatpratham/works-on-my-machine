@@ -159,3 +159,23 @@ export function classifyProjectFile(relativePath: string): ProjectFileType {
 
   return 'other';
 }
+
+const FIXTURE_DIR_NAMES = new Set([
+  'fixtures',
+  '__fixtures__',
+  'test-fixtures',
+  'fixture',
+]);
+
+/**
+ * Checks whether a relative file path resides within a test fixture directory.
+ */
+export function isFixturePath(relativePath: string): boolean {
+  const normalized = relativePath.replace(/\\/g, '/');
+  const segments = normalized.split('/');
+  // Remove filename to check directory segments
+  segments.pop();
+  return segments.some((segment) =>
+    FIXTURE_DIR_NAMES.has(segment.toLowerCase()),
+  );
+}

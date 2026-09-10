@@ -151,6 +151,86 @@ describe('RuntimeDetector', () => {
     expect(conflict?.severity).toBe(SEVERITIES.WARNING);
   });
 
+  it('evaluates semver range >=20.0.0 with Node 22.x: compatible (no mismatch, unpinned warning emitted)', () => {
+    const ctx = createMockContext({
+      runtime: {
+        node: {
+          status: 'known',
+          declared: '>=20.0.0',
+          installed: '22.17.1',
+          source: 'package.json#engines.node',
+        },
+      },
+    });
+
+    const findings = detector.analyze(ctx);
+    expect(
+      findings.find((f) => f.id === 'runtime.node.mismatch'),
+    ).toBeUndefined();
+    const unpinned = findings.find((f) => f.id === 'runtime.node.unpinned');
+    expect(unpinned).toBeDefined();
+    expect(unpinned?.severity).toBe(SEVERITIES.WARNING);
+  });
+
+  it('evaluates semver range >=20.0.0 with Node 18.x: reports mismatch', () => {
+    const ctx = createMockContext({
+      runtime: {
+        node: {
+          status: 'known',
+          declared: '>=20.0.0',
+          installed: '18.19.0',
+          source: 'package.json#engines.node',
+        },
+      },
+    });
+
+    const findings = detector.analyze(ctx);
+    const mismatch = findings.find((f) => f.id === 'runtime.node.mismatch');
+    expect(mismatch).toBeDefined();
+    expect(mismatch?.severity).toBe(SEVERITIES.CRITICAL);
+    expect(mismatch?.description).toContain('Node.js >=20.0.0');
+    expect(mismatch?.description).toContain('running Node.js 18.19.0');
+  });
+
+  it('reports exact Node version mismatch when installed version differs', () => {
+    const ctx = createMockContext({
+      runtime: {
+        node: {
+          status: 'known',
+          declared: '20.19.0',
+          installed: '22.17.1',
+          source: '.nvmrc',
+        },
+      },
+    });
+
+    const findings = detector.analyze(ctx);
+    const mismatch = findings.find((f) => f.id === 'runtime.node.mismatch');
+    expect(mismatch).toBeDefined();
+    expect(mismatch?.severity).toBe(SEVERITIES.CRITICAL);
+  });
+
+  it('does not emit python findings when python is not applicable for project', () => {
+    const ctx = createMockContext({
+      runtime: {
+        node: {
+          status: 'known',
+          declared: '20.19.0',
+          installed: '20.19.0',
+          source: '.nvmrc',
+        },
+        python: {
+          status: 'not_applicable',
+        },
+      },
+    });
+
+    const findings = detector.analyze(ctx);
+    expect(
+      findings.find((f) => f.id.startsWith('runtime.python')),
+    ).toBeUndefined();
+  });
+
   it('detects unpinned Python version (runtime.python.unpinned)', () => {
     const ctx = createMockContext({
       runtime: {
@@ -182,6 +262,24 @@ describe('RuntimeDetector', () => {
     const mismatch = findings.find((f) => f.id === 'runtime.python.mismatch');
     expect(mismatch).toBeDefined();
     expect(mismatch?.severity).toBe(SEVERITIES.CRITICAL);
+  });
+
+  it('evaluates Python semver range >=3.10 with installed Python 3.11 as compatible', () => {
+    const ctx = createMockContext({
+      runtime: {
+        python: {
+          status: 'known',
+          declared: '>=3.10.0',
+          installed: '3.11.4',
+          source: 'pyproject.toml',
+        },
+      },
+    });
+
+    const findings = detector.analyze(ctx);
+    expect(
+      findings.find((f) => f.id === 'runtime.python.mismatch'),
+    ).toBeUndefined();
   });
 });
 
