@@ -60,9 +60,13 @@ describe('CLI runtime version resolution', () => {
   });
 
   it('should fallback to 0.0.0 when no package.json is found in traversal', () => {
-    const fakeUrl = pathToFileURL(
-      'C:\\non_existent_folder_xyz\\nested\\index.js',
-    ).href;
+    const nonExistentPath = resolve(
+      '/',
+      'non_existent_folder_xyz_9999',
+      'nested',
+      'index.js',
+    );
+    const fakeUrl = pathToFileURL(nonExistentPath).href;
     const version = getCliVersion(fakeUrl);
     expect(version).toBe('0.0.0');
   });

@@ -24,11 +24,11 @@ export function getCliVersion(fromUrl: string = import.meta.url): string {
             version?: string;
           };
 
-          // Check if this package.json belongs to womm or has a valid version string
+          // Check if this package.json belongs to womm or is the package root
           if (
             parsed.name === '@isthatpratham/womm' ||
             parsed.name === 'womm' ||
-            (parsed.version && typeof parsed.version === 'string')
+            (!parsed.name && typeof parsed.version === 'string')
           ) {
             if (
               typeof parsed.version === 'string' &&
