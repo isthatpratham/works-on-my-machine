@@ -4,1111 +4,472 @@
 
 ---
 
-<h1 align="center">WOMM</h1>
+# Works on My Machine
 
-<p align="center">
-  <strong>Works on my machine. Let's prove it.</strong>
-</p>
+> Let's prove it.
 
-<p align="center">
-  A local-first CLI that finds the environment differences that make projects work on one machine and fail on another.
-</p>
+[![CI](https://github.com/isthatpratham/works-on-my-machine/actions/workflows/ci.yml/badge.svg)](https://github.com/isthatpratham/works-on-my-machine/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen.svg)](package.json)
 
-<p align="center">
-  <a href="#quick-start">Quick Start</a> ·
-  <a href="#what-it-checks">What It Checks</a> ·
-  <a href="#how-it-works">How It Works</a> ·
-  <a href="#documentation">Documentation</a>
-</p>
+**WOMM** is a local-first, read-only developer CLI that analyzes your project and host machine to identify reproducibility and portability risks before code is pushed or shared.
+
+---
+
+## Quick Navigation
+
+[Quick Start](#quick-start) · [What WOMM Does](#what-womm-does) · [What It Checks](#what-womm-checks) · [Scoring](#scoring) · [Command Reference](#command-reference) · [Exit Codes](#exit-codes) · [Safe by Design](#safe-by-design) · [Example Output](#example-output) · [Development](#development) · [FAQ](#faq)
 
 ---
 
 ## The Problem
 
-> "But it works on my machine."
+> *"Works on my machine."*
 
-Every developer has heard it.
+Every developer has heard it, and every team has lost hours to it. A project builds and runs smoothly on one machine, only to fail on another due to hidden assumptions:
 
-A project works perfectly on one laptop, then someone else clones it and gets:
+- **Runtime drift:** Unpinned or mismatched Node.js/Python versions.
+- **Dependency inconsistencies:** Missing, conflicting, or untracked lockfiles.
+- **Undocumented environment requirements:** Missing `.env.example` templates or undeclared environment variables.
+- **Local service dependencies:** Code expecting local PostgreSQL, Redis, or daemon processes running on `localhost`.
+- **Platform-specific scripts:** Shell scripts and absolute paths that fail across operating systems.
+- **Git state risks:** Tracked `.env` secret files, missing `.gitignore`, or uncommitted dirty working tree state.
 
-- A different Node/Python version
-- Missing environment variables
-- Different dependency versions
-- A local database that doesn't exist
-- A hardcoded machine path
-- An OS-specific command
-- A lockfile that never made it into Git
-- Configuration that only exists on the original machine
-
-Usually, you discover these problems **after** someone else tries to run the project.
-
-WOMM asks a better question:
-
-> **What assumptions is this project making about the machine it's running on?**
-
-And then it shows you.
+WOMM surfaces these portability issues instantly and gives you a single, deterministic score.
 
 ---
 
-## Quick Start
+## Why WOMM?
 
-### Run it in the current project
+- **Catch drift early:** Detect runtime and dependency mismatches before debugging broken builds.
+- **Surface hidden dependencies:** Identify hardcoded `localhost` URLs and machine-specific file paths.
+- **Enforce template hygiene:** Ensure every environment variable is documented in `.env.example`.
+- **Single reproducibility score:** Get an instant 0–100 score that summarizes project portability.
+- **Zero configuration:** Works out of the box with zero configuration files, accounts, or setup.
 
-```bash
-npx womm
-```
+---
 
-Or install it globally:
+## Installation
+
+### Global Installation (Recommended)
 
 ```bash
 npm install -g womm
 ```
 
-Then:
-
-```bash
-womm
-```
-
-You can also analyze another project:
-
-```bash
-womm check ./my-project
-```
-
-No account.
-
-No API key.
-
-No cloud service.
-
-No Docker.
-
-No AI.
-
-Just run it.
-
----
-
-## What It Looks Like
-
-```text
-$ womm
-
-  WORKS ON MY MACHINE
-
-  Scanning project...
-
-  Runtime          ✓
-  Dependencies     ⚠
-  Environment      ⚠
-  Configuration    ✓
-  Git              ✓
-
-  Reproducibility Score: 72/100
-
-  ⚠ 3 issues may prevent this project
-    from working on another machine.
-
-  WARNING  Dependency lockfile is missing
-           Different machines may resolve different versions.
-
-  WARNING  .env.example is missing
-           Required environment variables may not be documented.
-
-  WARNING  Local PostgreSQL dependency detected
-           The project expects PostgreSQL at localhost:5432.
-
-  → Run `womm check --verbose` for all findings.
-```
-
-The goal is simple:
-
-**Run WOMM before someone else runs into the problem.**
-
----
-
-# What Is WOMM?
-
-WOMM is a deterministic, local-first project reproducibility analyzer.
-
-It inspects:
-
-```text
-Your Project
-     +
-Your Environment
-     +
-Git State
-     ↓
-Reproducibility Analysis
-     ↓
-Findings
-     ↓
-Score
-     ↓
-Actionable Report
-```
-
-It doesn't modify your project.
-
-It doesn't install anything.
-
-It doesn't upload your source code.
-
-It simply looks at what is there and tells you what another machine might be missing.
-
----
-
-# What It Checks
-
-WOMM V1 analyzes five areas:
-
-| Category          | What WOMM looks for                                               |
-| ----------------- | ----------------------------------------------------------------- |
-| **Runtime**       | Node/Python versions, runtime declarations, version mismatches    |
-| **Dependencies**  | Manifests, lockfiles, package-manager conflicts                   |
-| **Environment**   | `.env`, required variables, localhost dependencies, machine paths |
-| **Configuration** | Scripts, framework metadata, platform-specific assumptions        |
-| **Git**           | Tracked `.env`, untracked lockfiles, dirty state, `.gitignore`    |
-
----
-
-## 1. Runtime
-
-WOMM checks whether the project and the current machine agree about the runtime.
-
-For example:
-
-```text
-Project requires: Node 20.x
-Your machine:     Node 18.x
-```
-
-WOMM reports:
-
-```text
-CRITICAL
-
-Node.js version mismatch
-
-Project declares Node.js 20.x,
-but the current machine is running Node 18.x.
-```
-
-It can also detect missing or conflicting runtime declarations.
-
----
-
-## 2. Dependencies
-
-Dependency reproducibility matters.
-
-WOMM checks for things such as:
-
-```text
-package.json
-package-lock.json
-pnpm-lock.yaml
-yarn.lock
-bun.lockb
-requirements.txt
-pyproject.toml
-```
-
-For example:
-
-```text
-package.json
-```
-
-but no lockfile.
-
-WOMM can flag:
-
-```text
-WARNING
-
-Dependency lockfile is missing.
-
-Different machines may resolve different
-dependency versions.
-```
-
-It can also detect multiple competing lockfiles.
-
----
-
-## 3. Environment
-
-This is where many "works on my machine" problems hide.
-
-WOMM can detect signals such as:
-
-```text
-.env
-.env.example
-process.env.DATABASE_URL
-localhost:5432
-192.168.1.50
-C:\Users\someone\project
-/home/someone/project
-```
-
-For example:
-
-```text
-WARNING
-
-Local PostgreSQL dependency detected.
-
-Evidence:
-localhost:5432
-
-Impact:
-The project expects PostgreSQL to be
-available on this machine.
-```
-
-WOMM **never prints environment variable values**.
-
-It works with variable names and sanitized evidence.
-
----
-
-## 4. Configuration
-
-WOMM looks at project configuration and execution assumptions.
-
-Examples include:
-
-```text
-npm scripts
-runtime metadata
-framework configuration
-platform-specific commands
-```
-
-It can identify situations where:
-
-```bash
-bash ./setup.sh
-```
-
-or another OS-specific command may make the project behave differently on another machine.
-
----
-
-## 5. Git
-
-Your working directory can contain things that your repository doesn't.
-
-WOMM checks Git state for reproducibility signals such as:
-
-```text
-.env tracked by Git
-lockfile not tracked
-uncommitted changes
-missing .gitignore
-```
-
-Example:
-
-```text
-CRITICAL
-
-Environment file is tracked by Git.
-
-Impact:
-Sensitive local configuration may be committed
-to the repository.
-```
-
-WOMM is not a full security scanner.
-
-It simply identifies high-value Git/reproducibility issues within its scope.
-
----
-
-# The Reproducibility Score
-
-WOMM produces a deterministic score from:
-
-```text
-0 ─────────────────────────────── 100
-│                                  │
-Severe                         Excellent
-```
-
-Example:
-
-```text
-Reproducibility Score: 72/100
-```
-
-The score starts at:
-
-```text
-100
-```
-
-and known reproducibility risks deduct points.
-
-Default penalties:
-
-```text
-CRITICAL   -25
-WARNING    -10
-INFO         0
-```
-
-Some rules have more specific penalties based on their impact.
-
-For example:
-
-```text
-Node mismatch              -25
-Missing lockfile           -10
-Local database dependency  -15
-Dirty working tree          -5
-                           ───
-Total                      -55
-
-Score                       45/100
-```
-
-### Score bands
-
-|      Score | Meaning   |
-| ---------: | --------- |
-| **90–100** | Excellent |
-|  **75–89** | Good      |
-|  **50–74** | Moderate  |
-|  **25–49** | Risky     |
-|   **0–24** | Poor      |
-
-A score of `100` means:
-
-> **WOMM found no known reproducibility issues within its detection scope.**
-
-It does **not** mean the project is guaranteed to work everywhere.
-
----
-
-# How It Works
-
-WOMM follows a deterministic analysis pipeline:
-
-```mermaid
-flowchart TD
-    A["Project Path"] --> B["Project Discovery"]
-    B --> C["Build Project Context"]
-    C --> D["Detection Engine"]
-
-    D --> D1["Runtime"]
-    D --> D2["Dependencies"]
-    D --> D3["Environment"]
-    D --> D4["Configuration"]
-    D --> D5["Git"]
-
-    D1 --> E["Rule Engine"]
-    D2 --> E
-    D3 --> E
-    D4 --> E
-    D5 --> E
-
-    E --> F["Finding Aggregator"]
-    F --> G["Scoring Engine"]
-    F --> H["Report Renderer"]
-
-    G --> H
-
-    H --> I["Human-readable CLI Report"]
-```
-
-The important part:
-
-**Detection and presentation are separate.**
-
-A detector doesn't know how the terminal looks.
-
-A renderer doesn't decide whether something is a problem.
-
-A scorer doesn't inspect your filesystem.
-
-Each layer has one job.
-
----
-
-# Architecture
-
-```mermaid
-flowchart LR
-    CLI["CLI Layer"] --> APP["Application Orchestrator"]
-
-    APP --> DISC["Discovery"]
-    APP --> DET["Detection Engine"]
-
-    DISC --> CTX["Project Context"]
-    CTX --> DET
-
-    DET --> RULES["Rule Engine"]
-    RULES --> FIND["Findings"]
-
-    FIND --> SCORE["Scoring"]
-    FIND --> REPORT["Reporting"]
-
-    SCORE --> REPORT
-
-    PLATFORM["Platform Layer"] --> DISC
-    PLATFORM --> DET
-```
-
-### Core design principles
-
-- **Deterministic** — same input, same result
-- **Read-only** — WOMM never modifies the project
-- **Offline** — no network required
-- **Modular** — detectors and rules are independent
-- **Cross-platform** — Windows, macOS, and Linux
-- **Explainable** — every finding has evidence and a recommendation
-
----
-
-# Why Not Just Run Docker?
-
-Docker can reproduce an environment.
-
-That's useful.
-
-But WOMM solves a different problem first:
-
-> **Before containerizing the project, understand what is actually different about the environment.**
-
-V1 intentionally does **not** use Docker.
-
-Docker-based reproduction may become a future feature, but the core WOMM analyzer remains useful without it.
-
----
-
-# Why Not Use AI?
-
-Because the core problem doesn't need AI.
-
-If WOMM sees:
-
-```text
-Project requires Node 20
-Machine has Node 18
-```
-
-there is nothing an LLM needs to decide.
-
-The result should be:
-
-```text
-Node version mismatch
-```
-
-Every time.
-
-WOMM V1 therefore keeps the core engine:
-
-```text
-Deterministic
-+
-Local
-+
-Offline
-+
-Explainable
-```
-
-AI-assisted explanations may be added later as an optional layer.
-
----
-
-# What WOMM Does Not Do
-
-WOMM V1 deliberately does **not**:
-
-- Modify your source code
-- Install dependencies
-- Change your configuration
-- Run arbitrary project scripts
-- Commit or reset Git changes
-- Upload source code
-- Require an API key
-- Require Docker
-- Require AI
-- Act as a full security scanner
-
-WOMM diagnoses.
-
-**It doesn't "fix" things behind your back.**
-
----
-
-# Read-Only by Design
-
-WOMM is an analyzer, not a repair tool.
-
-```mermaid
-flowchart LR
-    P["Your Project"] --> R["WOMM"]
-    R --> A["Analyze"]
-    A --> F["Find Problems"]
-    F --> S["Suggest Action"]
-
-    R -.->|"Never modifies"| P
-```
-
-That means you can safely run:
-
-```bash
-womm
-```
-
-against a project before handing it to a teammate, publishing it, or deploying it.
-
----
-
-# Security & Privacy
-
-WOMM is designed to run against real-world repositories, including private ones.
-
-### WOMM does not upload your project.
-
-There is no required:
-
-```text
-Cloud service
-API
-Telemetry
-Remote scanner
-```
-
-### WOMM does not print secrets.
-
-For example, if your project contains:
-
-```text
-DATABASE_URL=postgres://user:password@localhost/db
-```
-
-WOMM may report:
-
-```text
-DATABASE_URL
-```
-
-but it will never intentionally print:
-
-```text
-password
-```
-
-### WOMM does not execute your application.
-
-It will not automatically run:
-
-```bash
-npm install
-npm start
-npm test
-python app.py
-```
-
----
-
-# Supported Platforms
-
-WOMM is designed for:
-
-```text
-Windows
-macOS
-Linux
-```
-
-The implementation avoids unnecessary shell-specific behavior and relies primarily on Node.js APIs.
-
----
-
-# CLI
-
-## Analyze the current directory
-
-```bash
-womm
-```
-
-Equivalent to:
-
-```bash
-womm check .
-```
-
----
-
-## Analyze another project
-
-```bash
-womm check ./my-project
-```
-
----
-
-## Detailed analysis
-
-```bash
-womm check --verbose
-```
-
----
-
-## Disable terminal colors
-
-```bash
-womm check --no-color
-```
-
----
-
-## Help
-
-```bash
-womm --help
-```
-
----
-
-## Version
+Verify the installation:
 
 ```bash
 womm --version
 ```
 
----
+### One-Time Execution
 
-# Exit Codes
-
-WOMM can also be used by scripts and CI systems.
-
-| Exit Code | Meaning                          |
-| --------: | -------------------------------- |
-|       `0` | No warnings or critical issues   |
-|       `1` | One or more warnings             |
-|       `2` | One or more critical issues      |
-|       `3` | WOMM execution failure           |
-|       `4` | Invalid CLI usage or target path |
-
-This means you can eventually do:
-
-```bash
-womm && echo "Looks reproducible."
-```
-
-or:
-
-```bash
-womm
-if [ $? -ne 0 ]; then
-  echo "Reproducibility issues detected."
-fi
-```
-
----
-
-# Installation
-
-## npm
-
-```bash
-npm install -g womm
-```
-
-## Run without installing
+Run without global installation using `npx`:
 
 ```bash
 npx womm
 ```
 
-## pnpm
+*(or using `pnpm dlx womm`)*
+
+---
+
+## Quick Start
+
+### 1. Analyze Current Directory
+
+Navigate to any project directory and run:
 
 ```bash
-pnpm dlx womm
+cd my-project
+womm
+```
+
+*(Equivalent to `womm check .`)*
+
+### 2. Analyze a Specific Target Directory
+
+```bash
+womm check ./path/to/project
+```
+
+Supports relative, absolute, and cross-platform paths (macOS, Linux, Windows).
+
+---
+
+## How It Works
+
+WOMM operates as a deterministic, multi-stage analysis pipeline:
+
+```text
+Discover ───▶ Collect ───▶ Detect ───▶ Evaluate ───▶ Score ───▶ Report
+```
+
+1. **Discover:** Locates manifests, lockfiles, environment files, and configuration.
+2. **Collect:** Safely inspects project files and host environment (Node.js, Python, Git).
+3. **Detect:** Runs modular, deterministic detectors across five core domains.
+4. **Evaluate:** Applies authoritative rule definitions to produce normalized findings.
+5. **Score:** Calculates a deterministic Reproducibility Score from 0 to 100.
+6. **Report:** Renders clean, actionable terminal cards with evidence and recommendations.
+
+---
+
+## What WOMM Checks
+
+| Category | What it checks | Examples |
+| :--- | :--- | :--- |
+| **Runtime** | Runtime versions declared vs. installed on host | Node.js mismatch, unpinned engines, version conflicts |
+| **Dependencies** | Lockfile presence, consistency, and tracking | Missing lockfile, multiple lockfiles, untracked lockfiles |
+| **Environment** | Environment variables, templates, and service couplings | Missing `.env.example`, undocumented variables, `localhost` dependencies |
+| **Configuration** | Project execution metadata and script portability | Missing package manager metadata, platform-specific shell scripts |
+| **Git** | Repository state, secret exposure, and tracking hygiene | Tracked `.env` files, uncommitted changes, missing `.gitignore` |
+
+---
+
+## Rule Reference
+
+### Runtime (`runtime`)
+
+- **Node.js version mismatch** (`runtime.node.mismatch`): Project declared version does not match host Node.js version.
+- **Node.js version unpinned** (`runtime.node.unpinned`): Node.js version allows arbitrary minor/patch ranges (`^`, `>=`, `*`).
+- **Conflicting Node.js declarations** (`runtime.node.conflict`): Multiple configuration files declare conflicting Node.js versions.
+- **Python version mismatch** (`runtime.python.mismatch`): Project declared Python version does not match host Python version.
+- **Python version unpinned** (`runtime.python.unpinned`): Python version constraint is unpinned or allows unbounded ranges.
+
+### Dependencies (`dependencies`)
+
+- **Missing lockfile** (`dependencies.lockfile.missing`): Manifest exists (`package.json`, `pyproject.toml`) but no lockfile was found.
+- **Multiple lockfiles** (`dependencies.lockfile.multiple`): Conflicting lockfiles detected from different package managers.
+- **Package manager conflict** (`dependencies.manager.conflict`): Lockfile does not match declared package manager metadata.
+- **Untracked lockfile** (`dependencies.lockfile.untracked`): Lockfile exists on disk but is not tracked in Git.
+
+### Environment (`environment`)
+
+- **Missing .env template** (`environment.env.template-missing`): `.env` file exists without a corresponding `.env.example`.
+- **Undocumented environment variable** (`environment.variable.undocumented`): Environment variable used in code/`.env` but omitted from `.env.example`.
+- **Local service dependency** (`environment.localhost.dependency`): Hardcoded dependency on `localhost` services (PostgreSQL, Redis, MySQL, etc.).
+- **Machine-specific absolute path** (`environment.absolute-path`): Hardcoded local filesystem path (`/Users/...`, `C:\Users\...`, `/home/...`).
+- **Hardcoded local IP** (`environment.hardcoded-local-ip`): Hardcoded private network IP address (`127.0.0.1`, `192.168.x.x`, `10.x.x.x`).
+
+### Configuration (`configuration`)
+
+- **Platform-specific script** (`configuration.script.platform-specific`): Scripts contain platform-dependent shell commands (`rm -rf`, `export`, Windows `cmd`).
+- **Missing runtime engine metadata** (`configuration.runtime-metadata.missing`): Project lacks explicit runtime or engine declarations.
+
+### Git (`git`)
+
+- **Tracked environment file** (`git.env.tracked`): `.env` file containing local values or secrets is tracked in Git.
+- **Dirty working tree** (`git.working-tree.dirty`): Uncommitted modifications or untracked changes exist in the working directory.
+- **Missing .gitignore** (`git.gitignore.missing`): Git repository lacks a `.gitignore` file.
+- **Untracked lockfile in Git** (`git.lockfile.untracked`): Lockfile is ignored or omitted from version control.
+
+---
+
+## Scoring
+
+WOMM uses a deterministic risk deduction model:
+
+$$\text{Score} = \max(0, 100 - \sum \text{penalties})$$
+
+Every analysis starts at **100 points**. Findings apply deterministic penalties based on severity and risk:
+
+### Finding Severities
+
+| Severity | Default Penalty | Impact |
+| :--- | :---: | :--- |
+| **CRITICAL** | `-25 pts` | Direct portability blocker (e.g. runtime mismatch, tracked `.env`) |
+| **WARNING** | `-5 to -15 pts` | Potential inconsistency or environment assumption |
+| **INFO** | `0 pts` | Informational fact; does not reduce score |
+
+### Status Bands
+
+| Score Range | Status | Interpretation |
+| :---: | :---: | :--- |
+| **90 – 100** | `EXCELLENT` | Highly reproducible across machines |
+| **75 – 89** | `GOOD` | Mostly reproducible with minor risks |
+| **50 – 74** | `MODERATE` | Reproducibility risks detected |
+| **25 – 49** | `RISKY` | Significant reproducibility problems |
+| **0 – 24** | `POOR` | Severe reproducibility risks |
+
+---
+
+## Command Reference
+
+| Command | Description |
+| :--- | :--- |
+| `womm` | Analyze current directory (default) |
+| `womm check [path]` | Analyze project at target directory (default: `.`) |
+| `womm --help` / `-h` | Display CLI help and available options |
+| `womm --version` / `-v` | Output installed WOMM version |
+
+---
+
+## CLI Options
+
+| Option | Description |
+| :--- | :--- |
+| `--verbose` | Enable verbose diagnostic output and detailed stage execution |
+| `--no-color` | Disable colored terminal output (useful for CI, logs, and pipes) |
+| `-v, --version` | Output the version number |
+| `-h, --help` | Display help for command |
+
+---
+
+## Exit Codes
+
+WOMM provides standardized exit codes for CI pipelines and automation scripts:
+
+| Exit Code | Constant | Meaning |
+| :---: | :--- | :--- |
+| `0` | `SUCCESS` | Analysis completed successfully with no warnings or critical findings. |
+| `1` | `WARNINGS` | Analysis completed and detected one or more warning findings. |
+| `2` | `CRITICAL` | Analysis completed and detected one or more critical findings. |
+| `3` | `FATAL` | Fatal execution error during analysis. |
+| `4` | `INVALID_USAGE` | Invalid CLI arguments, unrecognized options, or inaccessible target path. |
+
+---
+
+## Example Output
+
+```text
+┌───────────────────────────┐
+│    WORKS ON MY MACHINE    │
+│      Let's prove it.      │
+└───────────────────────────┘
+
+PROJECT
+test-node-app
+Next.js · Node.js 22.17.1 · pnpm 10.18.0
+
+Path: /home/user/projects/test-node-app
+
+──────────────────────────────────────────────────
+
+REPRODUCIBILITY
+
+██████████░░░░░░░░░░  50 / 100
+
+MODERATE
+Reproducibility risks detected
+
+──────────────────────────────────────────────────
+
+CATEGORY HEALTH
+
+  Runtime          ✖ CRITICAL
+  Dependencies     ✓ PASS
+  Environment      ⚠ WARNING
+  Configuration    ✓ PASS
+  Git              ⚠ WARNING
+
+──────────────────────────────────────────────────
+
+FINDINGS
+
+┌  ✖ CRITICAL  ───────────────────────────────────────────────────────────────┐
+│ Node.js version mismatch                                                     │
+│ runtime.node.mismatch                                                        │
+│                                                                              │
+│ Project declares Node.js 20.19.0, but the current machine is running Node.js │
+│ 22.17.1.                                                                     │
+│                                                                              │
+│ Evidence                                                                     │
+│ › [runtime-mismatch] .nvmrc                                                  │
+│ declared: 20.19.0, installed: 22.17.1                                        │
+│                                                                              │
+│ Impact                                                                       │
+│ The project may fail to install, build, or run due to runtime                │
+│ incompatibilities.                                                           │
+│                                                                              │
+│ Recommendation                                                               │
+│ Switch to the project's declared Node.js version.                            │
+│                                                                              │
+│ -25 points                                                                   │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌  ⚠ WARNING  ──────────────────────────────────────────────────────────────┐
+│ Local service dependency detected                                          │
+│ environment.localhost.dependency                                           │
+│                                                                            │
+│ The project references a local POSTGRES dependency on localhost.           │
+│                                                                            │
+│ Evidence                                                                   │
+│ › [local-service] .env                                                     │
+│ localhost (POSTGRES)                                                       │
+│                                                                            │
+│ Impact                                                                       │
+│ The project expects external services to be running locally on the host    │
+│ machine.                                                                   │
+│                                                                            │
+│ Recommendation                                                             │
+│ Document local service dependencies and provide automated service setup    │
+│ (e.g. scripts or documentation).                                           │
+│                                                                            │
+│ -15 points                                                                 │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌  ⚠ WARNING  ────────────────────────────────────────────────────────────────┐
+│ No .gitignore file detected                                                  │
+│ git.gitignore.missing                                                        │
+│                                                                              │
+│ The Git repository does not contain a .gitignore file.                       │
+│                                                                              │
+│ Evidence                                                                     │
+│ › [missing-file] .gitignore                                                  │
+│                                                                              │
+│ Impact                                                                       │
+│ Machine-specific files, dependency directories, or secrets may accidentally  │
+│ enter version control.                                                       │
+│                                                                              │
+│ Recommendation                                                               │
+│ Add a .gitignore file appropriate for the project ecosystem.                 │
+│                                                                              │
+│ -5 points                                                                    │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌  ⚠ WARNING  ────────────────────────────────────────────────────────────────┐
+│ Working tree contains uncommitted changes                                    │
+│ git.working-tree.dirty                                                       │
+│                                                                              │
+│ The Git working tree contains uncommitted modifications or untracked         │
+│ changes.                                                                     │
+│                                                                              │
+│ Evidence                                                                     │
+│ › [git-status] .git                                                          │
+│ Working tree is dirty (uncommitted changes detected)                         │
+│                                                                              │
+│ Impact                                                                       │
+│ The current machine state may contain behavior not represented in the        │
+│ committed repository state.                                                  │
+│                                                                              │
+│ Recommendation                                                               │
+│ Commit or stash all uncommitted changes before verifying reproducibility.    │
+│                                                                              │
+│ -5 points                                                                    │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+──────────────────────────────────────────────────
+
+Summary
+
+  1 critical, 3 warnings, 0 informational
+
+  Analysis complete.
 ```
 
 ---
 
-# Development
+## Safe by Design
 
-Clone the repository:
+WOMM is engineered with strict read-only, local-first safety guarantees:
+
+- **100% Read-Only:** WOMM never modifies, creates, or deletes any files in your repository.
+- **Zero Script Execution:** WOMM does not execute `npm install`, build commands, or arbitrary package scripts.
+- **Zero Network Access:** Operates completely offline; no external requests are made.
+- **Zero Telemetry:** No analytics, tracking, or user data are ever collected or transmitted.
+- **Secret Sanitization:** Environment variable values, credentials, tokens, and database passwords are safe and never displayed in findings or evidence.
+- **Deterministic:** Identical repository and host machine states always yield identical findings and scores.
+
+---
+
+## Supported Environment
+
+- **Runtime:** Node.js `>= 20.0.0`
+- **Operating Systems:** macOS, Linux, Windows
+- **Ecosystems (V1):** Node.js (`npm`, `pnpm`, `yarn`, `bun`), Python (`pip`, `poetry`, `pipenv`), and Git repositories
+
+---
+
+## Development
+
+Contributions and bug reports are welcome!
+
+### Prerequisites
+
+- Node.js `>= 20.0.0`
+- pnpm `>= 10.0.0`
+
+### Setup
 
 ```bash
-git clone https://github.com/<your-username>/works-on-my-machine.git
+# Clone the repository
+git clone https://github.com/isthatpratham/works-on-my-machine.git
 cd works-on-my-machine
-```
 
-Install dependencies:
-
-```bash
+# Install dependencies
 pnpm install
-```
 
-Run the CLI in development:
+# Run TypeScript typecheck
+pnpm typecheck
 
-```bash
-pnpm dev
-```
-
-Run tests:
-
-```bash
-pnpm test
-```
-
-Run linting:
-
-```bash
+# Run ESLint
 pnpm lint
-```
 
-Build:
+# Check formatting
+pnpm format:check
 
-```bash
+# Run full test suite
+pnpm test
+
+# Build distribution bundle
 pnpm build
 ```
 
 ---
 
-# Project Structure
+## Project Structure
 
 ```text
-works-on-my-machine/
-│
-├── docs/
-│   ├── PRD.md
-│   ├── ARCHITECTURE.md
-│   ├── TECH-STACK.md
-│   ├── DETECTION-ENGINE.md
-│   ├── CLI-SPEC.md
-│   └── SCORING.md
-│
-├── images/
-│   └── 1.png
-│
-├── src/
-│   ├── cli/
-│   ├── application/
-│   ├── discovery/
-│   ├── detectors/
-│   ├── rules/
-│   ├── scoring/
-│   ├── reporting/
-│   ├── platform/
-│   └── types/
-│
-├── tests/
-│   └── fixtures/
-│
-├── package.json
-├── pnpm-lock.yaml
-├── tsconfig.json
-├── eslint.config.js
-├── prettier.config.js
-└── README.md
+src/
+├── application/     # Application workflow and context orchestration
+├── cli/             # Commander CLI setup, commands, options, and exit codes
+├── detection/       # Detection engine, registry, and rule detector implementations
+├── discovery/       # Project discovery and fact collection (Node, Python, Git, Env)
+├── domain/          # Core domain entities, finding contracts, severity models
+├── platform/        # Safe filesystem, child process, and Git interfaces
+├── reporting/       # Terminal renderer, box formatters, score bars, cards
+└── scoring/         # Scoring engine, penalties, status classification
 ```
 
 ---
 
-# Detection Engine
+## V1 Status & Roadmap
 
-The detection engine is intentionally modular.
+- **Current Version:** `v0.1.0`
+- **Status:** Initial V1 Core Release (Local-first detection & scoring)
 
-```mermaid
-flowchart TD
-    CTX["Project Context"]
+### Future Considerations (Post-V1)
 
-    CTX --> R["Runtime Detectors"]
-    CTX --> D["Dependency Detectors"]
-    CTX --> E["Environment Detectors"]
-    CTX --> C["Configuration Detectors"]
-    CTX --> G["Git Detectors"]
-
-    R --> RULE["Rules"]
-    D --> RULE
-    E --> RULE
-    C --> RULE
-    G --> RULE
-
-    RULE --> FIND["Standardized Findings"]
-```
-
-A finding contains:
-
-```text
-ID
-Category
-Severity
-Title
-Description
-Evidence
-Impact
-Recommendation
-```
-
-Example:
-
-```text
-runtime.node.mismatch
-
-Severity:
-CRITICAL
-
-Title:
-Node.js version mismatch
-
-Evidence:
-package.json → engines.node = 20.x
-Machine → Node 18.x
-
-Impact:
-The project may fail to install, build, or run.
-
-Recommendation:
-Use the project's declared Node.js version.
-```
+- Machine-readable output formats (`--json`)
+- Additional language ecosystem detectors (Rust, Go, Java, Dockerfile analysis)
+- CI summary formatters and GitHub Actions integration
+- Configurable rule thresholds and ignore files
 
 ---
 
-# Current V1 Rules
+## FAQ
 
-The initial rule set focuses on high-value reproducibility problems.
+#### Does WOMM modify my project or files?
+No. WOMM is strictly read-only and never creates, updates, or deletes any project files.
 
-### Runtime
+#### Does WOMM run `npm install` or execute package scripts?
+No. WOMM only inspects existing static files, manifests, lockfiles, and environment declarations. It never runs install or build commands.
 
-```text
-runtime.node.unpinned
-runtime.node.mismatch
-runtime.node.conflict
-runtime.python.unpinned
-runtime.python.mismatch
-```
+#### Does WOMM require internet or send telemetry?
+No. WOMM is 100% offline and local-first with zero telemetry or network calls.
 
-### Dependencies
+#### Does WOMM require Docker or AI/LLMs?
+No. WOMM relies on deterministic static analysis and local system discovery without Docker or external AI APIs.
 
-```text
-dependencies.lockfile.missing
-dependencies.lockfile.multiple
-dependencies.manager.conflict
-dependencies.lockfile.untracked
-```
+#### Can I run WOMM in CI?
+Yes. WOMM produces standard exit codes (`0` for clean, `1` for warnings, `2` for critical issues) and supports `--no-color` for CI log output.
 
-### Environment
-
-```text
-environment.env.template-missing
-environment.variable.undocumented
-environment.localhost.dependency
-environment.absolute-path
-environment.hardcoded-local-ip
-```
-
-### Configuration
-
-```text
-configuration.script.platform-specific
-configuration.runtime-metadata.missing
-```
-
-### Git
-
-```text
-git.env.tracked
-git.working-tree.dirty
-git.gitignore.missing
-git.lockfile.untracked
-```
-
-The rule set will grow based on real-world usage.
-
----
-
-# Technology
-
-WOMM V1 is intentionally lightweight.
-
-```text
-TypeScript
-Node.js 20+
-Commander
-Vitest
-tsup
-ESLint
-Prettier
-pnpm
-npm
-```
-
-The project prioritizes Node's standard library wherever possible.
-
----
-
-# Design Philosophy
-
-## Diagnose before you containerize.
-
-Before reaching for Docker, cloud environments, or complicated setup scripts, understand the assumptions your project is already making.
-
-## Deterministic before intelligent.
-
-A reproducibility problem should be detected by a reproducible rule whenever possible.
-
-## Read-only before automated fixes.
-
-A developer should know what WOMM found before anything changes.
-
-## Local-first before cloud-first.
-
-Your project stays on your machine.
-
-## Simple before clever.
-
-The ideal WOMM experience is:
-
-```bash
-womm
-```
-
-and a few seconds later:
-
-```text
-Here's what may break.
-Here's why.
-Here's what you should check.
-```
-
----
-
-# Roadmap
-
-### V1 — Local Reproducibility Analysis
-
-- [x] Project discovery architecture
-- [x] Runtime analysis design
-- [x] Dependency analysis design
-- [x] Environment analysis design
-- [x] Configuration analysis design
-- [x] Git analysis design
-- [x] Deterministic scoring model
-- [ ] Node.js runtime detector
-- [ ] Python runtime detector
-- [ ] Dependency detectors
-- [ ] Environment detectors
-- [ ] Configuration detectors
-- [ ] Git detectors
-- [ ] CLI implementation
-- [ ] Fixture-based tests
-- [ ] npm package
-
-### Future
-
-Potential future capabilities:
-
-```text
-AI-assisted explanations
-Automatic fix suggestions
-Docker-based reproduction
-CI integration
-GitHub Actions
-JSON output
-Historical comparisons
-Additional language ecosystems
-Service/database detection
-```
-
-These are intentionally outside the V1 core.
-
----
-
-# Documentation
-
-Technical documentation lives in [`docs/`](docs/).
-
-| Document                                          | Purpose                           |
-| ------------------------------------------------- | --------------------------------- |
-| [`PRD.md`](docs/PRD.md)                           | Product requirements and V1 scope |
-| [`ARCHITECTURE.md`](docs/ARCHITECTURE.md)         | System architecture               |
-| [`TECH-STACK.md`](docs/TECH-STACK.md)             | Technology decisions              |
-| [`DETECTION-ENGINE.md`](docs/DETECTION-ENGINE.md) | Detection and rule system         |
-| [`CLI-SPEC.md`](docs/CLI-SPEC.md)                 | CLI behavior and UX               |
-| [`SCORING.md`](docs/SCORING.md)                   | Reproducibility scoring model     |
-
----
-
-# Contributing
-
-Contributions are welcome.
-
-If you want to add a detector or rule, the preferred approach is:
-
-```text
-1. Identify a real reproducibility problem.
-2. Add a deterministic detection rule.
-3. Add a representative fixture.
-4. Add tests.
-5. Document the rule and its scoring impact.
-6. Submit a pull request.
-```
-
-A good WOMM rule should answer:
-
-> **"What exactly would make this project fail or behave differently on another machine?"**
-
-Avoid rules that merely report interesting information without a reproducibility benefit.
-
----
-
-# Philosophy
-
-WOMM isn't trying to tell you:
-
-> "Your project is broken."
-
-It's trying to catch the moment before someone else says:
-
-> **"It doesn't work on my machine."**
-
-So before you send that repository to your teammate...
-
-Before you publish that starter template...
-
-Before you hand over that project...
-
-Run:
-
-```bash
-womm
-```
-
-**Works on my machine. Let's prove it.**
+#### Does a score of 100/100 guarantee my project will run everywhere?
+A 100/100 score indicates that WOMM detected no reproducibility issues within its V1 detection scope. It does not guarantee universal compatibility against uninspected external hardware or proprietary services.
 
 ---
 
 ## License
 
-MIT License.
-
-See [`LICENSE`](LICENSE) for details.
-
----
-
-<p align="center">
-  <strong>Works on my machine. Let's prove it.</strong>
-</p>
-
-<p align="center">
-  If WOMM saves you from one "works on my machine" argument, give the repo a ⭐
-</p>
+WOMM is open-source software licensed under the [MIT License](LICENSE).
