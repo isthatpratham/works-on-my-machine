@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { executeCheck } from './check.js';
 import type { GlobalOptions } from '../options.js';
-import { EXIT_CODES } from '../exit-codes.js';
+import { EXIT_CODES, type ExitCode } from '../exit-codes.js';
 
 export function registerCommands(program: Command): void {
   program
@@ -11,6 +11,8 @@ export function registerCommands(program: Command): void {
     .action(async (targetPath: string) => {
       const opts = program.opts<GlobalOptions>();
       const result = await executeCheck(targetPath, opts);
+      (program as unknown as { exitCode?: ExitCode }).exitCode =
+        result.exitCode;
       if (result.exitCode !== EXIT_CODES.SUCCESS) {
         process.exitCode = result.exitCode;
       }

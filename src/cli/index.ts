@@ -37,6 +37,7 @@ export function createProgram(): Command {
   program.action(async () => {
     const opts = program.opts<GlobalOptions>();
     const result = await executeCheck('.', opts);
+    (program as unknown as { exitCode?: ExitCode }).exitCode = result.exitCode;
     if (result.exitCode !== EXIT_CODES.SUCCESS) {
       process.exitCode = result.exitCode;
     }
@@ -50,7 +51,8 @@ export async function runCli(argv: string[] = process.argv): Promise<ExitCode> {
 
   try {
     await program.parseAsync(argv);
-    return EXIT_CODES.SUCCESS;
+    const code = (program as unknown as { exitCode?: ExitCode }).exitCode;
+    return code !== undefined ? code : EXIT_CODES.SUCCESS;
   } catch (error: unknown) {
     if (error instanceof CommanderError) {
       if (
