@@ -118,7 +118,7 @@ WOMM will be distributed through npm.
 Global installation:
 
 ```bash
-npm install -g womm
+npm install -g @isthatpratham/womm
 ```
 
 Then:
@@ -130,13 +130,13 @@ womm
 One-time execution:
 
 ```bash
-npx womm
+npx @isthatpratham/womm check .
 ```
 
 Alternative package-manager execution:
 
 ```bash
-pnpm dlx womm
+pnpm dlx @isthatpratham/womm check .
 ```
 
 The package should expose the CLI through the npm `bin` field.
