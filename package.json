@@ -43,6 +43,9 @@
     "url": "https://github.com/isthatpratham/works-on-my-machine/issues"
   },
   "homepage": "https://github.com/isthatpratham/works-on-my-machine#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "boxen": "^8.0.1",
     "chalk": "^6.0.0",
@@ -53,8 +56,10 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.5.0",
+    "conventional-changelog-conventionalcommits": "^10.4.0",
     "eslint": "^10.10.0",
     "prettier": "^3.9.6",
+    "semantic-release": "^25.0.9",
     "tsup": "^8.5.1",
     "tsx": "^4.23.13",
     "typescript": "^5.9.3",
