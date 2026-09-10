@@ -8,6 +8,8 @@ coverage/
 .env
 .env.*
 !.env.example
+!tests/fixtures/**/.env
+!tests/fixtures/**/.env.*
 
 *.log
 npm-debug.log*
