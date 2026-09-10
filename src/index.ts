@@ -5,4 +5,5 @@ export * from './domain/index.js';
 export * from './platform/index.js';
 export * from './discovery/index.js';
 export * from './detection/index.js';
+export * from './scoring/index.js';
 export * from './application/index.js';
