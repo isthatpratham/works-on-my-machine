@@ -1,6 +1,8 @@
 import type { DetectionResult } from '../detection/detection-result.js';
 import { DetectionEngine } from '../detection/detection-engine.js';
 import { createDefaultDetectorRegistry } from '../detection/default-registry.js';
+import type { ScoreResult } from '../scoring/score-result.js';
+import { ScoringEngine } from '../scoring/scoring-engine.js';
 import {
   buildProjectContext,
   type ContextBuilderOptions,
@@ -8,6 +10,10 @@ import {
 
 export interface AnalyzeProjectOptions extends ContextBuilderOptions {
   readonly engine?: DetectionEngine;
+}
+
+export interface EvaluateProjectOptions extends AnalyzeProjectOptions {
+  readonly scoringEngine?: ScoringEngine;
 }
 
 /**
@@ -25,4 +31,19 @@ export async function analyzeProject(
     options.engine ??
     new DetectionEngine({ registry: createDefaultDetectorRegistry() });
   return engine.run(context);
+}
+
+/**
+ * Executes the complete discovery, detection, evaluation, and scoring pipeline,
+ * returning the structured ScoreResult.
+ *
+ * Does NOT render terminal output.
+ */
+export async function evaluateProject(
+  targetInput?: string,
+  options: EvaluateProjectOptions = {},
+): Promise<ScoreResult> {
+  const detectionResult = await analyzeProject(targetInput, options);
+  const scoringEngine = options.scoringEngine ?? new ScoringEngine();
+  return scoringEngine.evaluate(detectionResult);
 }
